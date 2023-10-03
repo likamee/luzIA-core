@@ -1,0 +1,66 @@
+import os
+
+import pandas as pd
+from keras_preprocessing.image import ImageDataGenerator
+
+
+def __gen_generator(cfg, type_set, train_dtgen, df):
+    """ Generate a generator to train the model
+    :param cfg: Config class
+    :param type_set: type of data to be generated (training or validation)
+    :param train_dtgen: ImageDataGenerator object
+    :param df: dataframe with the files and the labels
+    :return: generator
+    """
+
+    gen = train_dtgen.flow_from_dataframe(
+        df,
+        x_col='filename',
+        y_col='label',
+        target_size=(cfg.target_size, cfg.target_size),
+        batch_size=cfg.batch_size,
+        class_mode="categorical",
+        interpolation='nearest',
+        subset=type_set)  # set as training data
+    return gen
+
+
+def __gen_df(label, path):
+    """ Generate a dataframe with the files and the label
+    :param label: label of the files
+    :param path: path to the files
+    :return: dataframe with the files and the label
+    """
+
+    file_and_label = []
+    for filename in os.listdir(path):
+        file_and_label.append((path+'/'+filename, label))
+    df = pd.DataFrame(file_and_label, columns=['filename', 'label'])
+    return df
+
+
+def gen_data(cfg, pato, EVAL=False):
+    """ Generate data to train the model
+    :param cfg: Config class
+    :param pato: pathology to be trained
+    :param EVAL: if True, the data is generated for evaluation (smaller data)
+    :return: train_gen and val_gen
+    """
+
+    split = 0.2 if not EVAL else 0.1
+    train_dtgen = ImageDataGenerator(
+            fill_mode='nearest',
+            validation_split=split)  # set validation split
+
+    # check the pathology to be trained and then load files with DF to train
+    df_pato = __gen_df(pato, cfg.source+pato)
+    df_norm = __gen_df('normal', cfg.source+'normal')
+    df = pd.concat([df_pato, df_norm], ignore_index=True)
+
+    # keep 10k images for each class on df randomly
+    df = df.groupby('label').apply(lambda x: x.sample(n=17000, random_state=1)).reset_index(drop=True)
+
+    train_gen = __gen_generator(cfg, 'training', train_dtgen, df)
+    val_gen = __gen_generator(cfg, 'validation', train_dtgen, df)
+
+    return train_gen, val_gen

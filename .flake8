@@ -1,0 +1,15 @@
+[flake8]
+exclude =
+	.git,
+	__pycache__,
+	build,
+	dist,
+	.tox,
+	venv,
+	.venv,
+	.pytest_cache,
+  ml_app/app/__init__.py,
+  ml_app/app/*/__init__.py,
+  ml_app/app.py
+
+max-line-length = 120

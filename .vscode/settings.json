@@ -1,0 +1,23 @@
+{
+  "python.testing.unittestEnabled": false,
+  "python.testing.nosetestsEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestArgs": [
+    "--disable-warnings"
+  ],
+  "files.exclude": {
+    "**/.git": false,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CSV": true,
+    "**/.DS_Store": true,
+    "**/.pytest_cache": true,
+    "**/__pycache__": true
+  },
+  "python.linting.flake8Enabled": true,
+  "python.linting.enabled": true,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": true
+  }
+}

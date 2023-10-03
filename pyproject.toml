@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "luzia-core"
+version = "0.1.0"
+description = "LuzIA Core"
+authors = ["Gabriel Aranha <talk@gabrielaranha.com"]
+repository = "https://github.com/likamee/luzIA-core"
+
+  [tool.poetry.dependencies]
+  python = ">=3.8,<3.10"
+  matplotlib = "^3.5.2"
+  pandas = "^1.4.3"
+  opencv-python = "^4.6.0.66"
+  scikit-image = "^0.19.3"
+  scikit-learn = "^1.1.2"
+  tensorflow-gpu = "2.7.0"
+  python-dotenv = "^0.20.0"
+
+
+  [tool.poetry.dev-dependencies]
+  flake8 = "^4.0.1"
+  pre-commit = "2.17.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
