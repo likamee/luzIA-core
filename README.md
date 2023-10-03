@@ -1,4 +1,4 @@
-# Data Extractor
+# LuizIA-core
 
 ## Requisitos
 
