@@ -10,11 +10,11 @@ class Config(object):
     action = 'train'
     secre_key = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
     ds = 'mixed'  # 'unifesp_classificadas'
-    n_layers = 5
-    source = 'data/'
+    n_layers = 9
+    source = 'data/'+ds+'/'
     dest = 'data/'+ds+'/algo/'
-    filesn = os.listdir(source+'normal')
-    filesp = os.listdir(source+'rd')
+    filesn = os.listdir(source+'normais')
+    filesp = os.listdir(source+'alteradas/rd')
     proportion = 2.82   # 2.82
     # imgn = len(filesn)
     path = os.getcwd()

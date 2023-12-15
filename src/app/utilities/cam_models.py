@@ -5,6 +5,7 @@ from tensorflow.keras.layers import Conv2D, Dense, Lambda
 from tensorflow.keras.metrics import AUC, BinaryAccuracy
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.optimizers.schedules import ExponentialDecay
 
 metrics = [
       BinaryAccuracy(name='accuracy'),
@@ -75,7 +76,13 @@ def build_vgg16_GAP(n_layers=12, type_train='n', model_name='_raw', input_shape=
                 layer.trainable = True
                 count = count + 1
 
-    opt = SGD(learning_rate=lr, decay=1e-6, momentum=0.9, nesterov=True)
+    lr_schedule = ExponentialDecay(
+        initial_learning_rate=lr,
+        decay_steps=100000,
+        decay_rate=0.96,
+        staircase=True)
+
+    opt = SGD(learning_rate=lr_schedule, momentum=0.9, nesterov=True)
 
     model.summary()
     model.compile(loss='binary_crossentropy',

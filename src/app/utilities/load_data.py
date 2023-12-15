@@ -54,13 +54,34 @@ def gen_data(cfg, pato, EVAL=False):
 
     # check the pathology to be trained and then load files with DF to train
     df_pato = __gen_df(pato, cfg.source+pato)
-    df_norm = __gen_df('normal', cfg.source+'normal')
+    df_norm = __gen_df('normais', cfg.source+'normais')
     df = pd.concat([df_pato, df_norm], ignore_index=True)
 
     # keep 10k images for each class on df randomly
-    df = df.groupby('label').apply(lambda x: x.sample(n=17000, random_state=1)).reset_index(drop=True)
+    # df = df.groupby('label').apply(lambda x: x.sample(n=17000, random_state=1)).reset_index(drop=True)
 
     train_gen = __gen_generator(cfg, 'training', train_dtgen, df)
     val_gen = __gen_generator(cfg, 'validation', train_dtgen, df)
 
     return train_gen, val_gen
+
+
+def gen_data_kfold(cfg, df, train_idx, val_idx):
+    """ Generate data for a specific fold in K-fold cross-validation.
+    :param cfg: Config class
+    :param df: dataframe with the files and the labels
+    :param train_idx: indices for the training data
+    :param val_idx: indices for the validation data
+    :return: train_gen and val_gen
+    """
+    train_dtgen = ImageDataGenerator(fill_mode='nearest')
+    val_dtgen = ImageDataGenerator(fill_mode='nearest')
+
+    train_df = df.iloc[train_idx].reset_index(drop=True)
+    val_df = df.iloc[val_idx].reset_index(drop=True)
+
+    train_gen = __gen_generator(cfg, None, train_dtgen, train_df)
+    val_gen = __gen_generator(cfg, None, val_dtgen, val_df)
+
+    return train_gen, val_gen
+

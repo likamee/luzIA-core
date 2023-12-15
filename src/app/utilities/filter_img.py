@@ -54,7 +54,7 @@ def check_blurry(image):
 
 
 def check_bright(image):
-    thresholds = [145, 15] # 135 35
+    thresholds = [135, 35] # 135 35
     is_light = np.mean(image) > thresholds[0]
     is_dark = np.mean(image) < thresholds[1]
     return is_light or is_dark
@@ -443,21 +443,19 @@ def apply_filter(method, pato, source, filesn, filesp, prop, hq, lq, type_img):
 
     count = 0
     for filename in filesp:
-        if any(list(map(lambda x: x in filename, reso))):
-            if not process_filters(source, filename, method, '/'+pato):
-                continue
-            count = count + 1
+        # if any(list(map(lambda x: x in filename, reso))):
+        if not process_filters(source, filename, method, '/'+pato):
+            continue
+        count = count + 1
 
     n_pato = count
-    imgn = int(n_pato*prop)
+    # imgn = int(n_pato*prop)
     count = 0
     for filename in filesn:
-        if any(list(map(lambda x: x in filename, reso))):
-            if not process_filters(source, filename, method):
-                continue
-            count = count + 1
-            if count == imgn:
-                break
+        # if any(list(map(lambda x: x in filename, reso))):
+        if not process_filters(source, filename, method):
+            continue
+        count = count + 1
 
 """if ("20sus" not in FILENAME and "021sus" not in FILENAME and "60sus" not in FILENAME and "70sus" not in FILENAME and "80sus" not in FILENAME):
     continue"""

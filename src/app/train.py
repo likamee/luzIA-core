@@ -1,8 +1,13 @@
 from tensorflow.keras import callbacks
+import pandas as pd
 
 from app.utilities import cam_models, filter_img
 from app.utilities.generic_funcs import remove_files_dir
-from app.utilities.load_data import gen_data
+from app.utilities.load_data import gen_data, gen_data_kfold, __gen_df
+from sklearn.utils import class_weight
+import numpy as np
+from sklearn.model_selection import StratifiedKFold
+
 
 
 def process_train(cfg, **kwargs):
@@ -26,23 +31,68 @@ def process_train(cfg, **kwargs):
         filter_img.apply_filter(filter, pato, cfg.source, cfg.filesn, cfg.filesp,
                                 cfg.proportion, cfg.hq, cfg.lq, cfg.type_img)
 
-    train_gen, val_gen = gen_data(cfg, pato)
+    df_pato = __gen_df(pato, cfg.dest+pato)
+    df_norm = __gen_df('normais', cfg.dest+'normais')
+    df = pd.concat([df_pato, df_norm], ignore_index=True)
 
-    model_name = pato+'_'+filter+'_'+str(cfg.n_layers)
-    model, model_name = cam_models.build_vgg16_GAP(cfg.n_layers, cfg.type_train, model_name)  # best 9 layers15
-    filename = model_name+'.csv'
-    csv_log = callbacks.CSVLogger('results/'+cfg.ds+'/'+filename, separator=',', append=False)
-    # early_stopping=callbacks.EarlyStopping(monitor='val_loss', min_delta=0, patience=0, verbose=0, mode='min')
-    file_path = 'models/'+cfg.ds+'/'+model_name+'.hdf5'
-    checkpoint = callbacks.ModelCheckpoint(file_path, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
-    callb_list = [csv_log, checkpoint]
+    # df = df.groupby('label').apply(lambda x: x.sample(n=17000, random_state=1)).reset_index(drop=True)
 
-    model.fit(
-        train_gen,
-        steps_per_epoch=train_gen.samples // cfg.batch_size,
-        validation_data=val_gen,
-        validation_steps=val_gen.samples // cfg.batch_size,
-        epochs=cfg.epochs,
-        callbacks=[callb_list])
-    # Evaluating the MODEL.
-    del model  # deletes the existing MODEL
+    # Extract labels for stratification
+    labels = df['label'].values
+
+    # Define the K-fold cross-validator
+    n_splits = 5
+    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
+
+    results = []
+
+    # Start the K-fold cross-validation loop
+    fold_var = 1
+    for train_idx, val_idx in skf.split(np.zeros(len(labels)), labels):
+        print(f"Training on fold {fold_var}")
+
+        # Generate data for the current fold
+        train_gen, val_gen = gen_data_kfold(cfg, df, train_idx, val_idx)
+
+        # Build and compile a fresh model for each fold
+        model_name = f"{pato}_{filter}_{str(cfg.n_layers)}_fold{fold_var}"
+        model, _ = cam_models.build_vgg16_GAP(cfg.n_layers, cfg.type_train, model_name)
+
+        filename = model_name+'.csv'
+        csv_log = callbacks.CSVLogger('results/'+cfg.ds+'/'+filename, separator=',', append=False)
+        early_stopping=callbacks.EarlyStopping(monitor='val_loss', patience=3, verbose=0, mode='min')
+        file_path = 'models/'+cfg.ds+'/'+model_name+'.keras'
+        checkpoint = callbacks.ModelCheckpoint(file_path, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
+        callb_list = [csv_log, checkpoint, early_stopping]
+
+        # Compute class weights for the current fold
+        class_weights = class_weight.compute_class_weight(
+            'balanced',
+            classes=np.unique(train_gen.classes),
+            y=train_gen.classes
+        )
+        class_weights_dict = dict(enumerate(class_weights))
+
+        # Fit the model
+        model.fit(
+            train_gen,
+            steps_per_epoch=train_gen.samples // cfg.batch_size,
+            validation_data=val_gen,
+            validation_steps=val_gen.samples // cfg.batch_size,
+            epochs=cfg.epochs,
+            callbacks=[callb_list],
+            class_weight=class_weights_dict
+        )
+
+        # Evaluate the model on the validation set and store metrics if needed
+        result = model.evaluate(val_gen, steps=val_gen.samples // cfg.batch_size)
+        results.append(result)
+
+        # Clean up after each fold to save memory
+        del model
+
+        fold_var += 1
+
+    # Calculate average result
+    average_result = np.mean(results, axis=0)
+    print(f'Average result: {average_result}')
