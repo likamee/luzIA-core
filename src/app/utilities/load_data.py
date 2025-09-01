@@ -1,7 +1,16 @@
 import os
+import cv2
+import random
 
 import pandas as pd
 from keras_preprocessing.image import ImageDataGenerator
+
+def crop_image(image):
+    h, w, _ = image.shape
+    crop_factor = random.uniform(0.8, 1)  # generate a random crop factor between 0.8 and 1
+    cropped_image = cv2.resize(image, (int(w), int(h*crop_factor)))  # crop image by random factor
+    resized_image = cv2.resize(cropped_image, (w, h))  # resize cropped image back to original size
+    return resized_image
 
 
 def __gen_generator(cfg, type_set, train_dtgen, df):

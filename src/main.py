@@ -11,4 +11,4 @@ def main(**kwargs):
     getattr(module, kwargs['function'])(config, **kwargs)
 
 
-main(module='train', function='process_train', gen_img=False, pato='rd', filter='raw')
+main(module='train', function='process_train', gen_img=False, pato='cataract', filter='raw')

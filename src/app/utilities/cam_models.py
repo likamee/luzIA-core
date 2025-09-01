@@ -1,11 +1,28 @@
 # -*- coding: utf-8 -*-
 from tensorflow.keras import backend as K
 from tensorflow.keras.applications import VGG16
-from tensorflow.keras.layers import Conv2D, Dense, Lambda
+from tensorflow.keras.layers import Conv2D, Dense, Layer
 from tensorflow.keras.metrics import AUC, BinaryAccuracy
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.optimizers.schedules import ExponentialDecay
+import tensorflow as tf
+
+@tf.keras.utils.register_keras_serializable()
+class GlobalAveragePooling(Layer):
+    def __init__(self, **kwargs):
+        super(GlobalAveragePooling, self).__init__(**kwargs)
+
+    def call(self, inputs):
+        return K.mean(inputs, axis=(2, 3))
+
+    def compute_output_shape(self, input_shape):
+        return input_shape[0:2]
+
+    def get_config(self):
+        base_config = super(GlobalAveragePooling, self).get_config()
+        return base_config
+import tensorflow as tf
 
 metrics = [
       BinaryAccuracy(name='accuracy'),
@@ -16,14 +33,6 @@ metrics = [
 def load_saved_model(model_path):
     """Load the saved model from the specified path."""
     return load_model(model_path)
-
-
-def global_average_pooling(x):
-    return K.mean(x, axis=(2, 3))
-
-
-def global_average_pooling_shape(input_shape):
-    return input_shape[0:2]
 
 
 # best 12 layers eyepacs and 6 messidor2
@@ -51,7 +60,7 @@ def build_vgg16_GAP(n_layers=12, type_train='n', model_name='_raw', input_shape=
         vgg_conv = VGG16(weights='imagenet', include_top=False, input_shape=input_shape)
 
         x = vgg_conv.output
-        x = Lambda(global_average_pooling, output_shape=global_average_pooling_shape)(x)
+        x = GlobalAveragePooling()(x)
         predictions = Dense(2, activation='softmax', kernel_initializer='uniform')(x)
 
         model = Model(inputs=vgg_conv.input, outputs=predictions)

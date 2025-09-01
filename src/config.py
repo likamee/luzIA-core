@@ -9,12 +9,12 @@ load_dotenv(os.path.join(os.getcwd(), '.env'))
 class Config(object):
     action = 'train'
     secre_key = os.environ.get('SECRET_KEY') or 'you-will-never-guess'
-    ds = 'mixed'  # 'unifesp_classificadas'
-    n_layers = 9
+    ds = 'mixed_cataract'  # 'unifesp_classificadas'
+    n_layers = 5
     source = 'data/'+ds+'/'
     dest = 'data/'+ds+'/algo/'
     filesn = os.listdir(source+'normais')
-    filesp = os.listdir(source+'alteradas/rd')
+    filesp = os.listdir(source+'alteradas/cataract')
     proportion = 2.82   # 2.82
     # imgn = len(filesn)
     path = os.getcwd()
